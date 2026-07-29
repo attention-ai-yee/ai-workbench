@@ -81,6 +81,7 @@ const RSS_SOURCES: RssSource[] = [
   },
   { name: "少数派", category: "科技", url: "https://sspai.com/feed", limit: 10 },
   { name: "爱范儿", category: "科技", url: "https://www.ifanr.com/feed", limit: 10 },
+  { name: "AI HOT", category: "AI", url: "https://aihot.virxact.com/feed.xml", limit: 20 },
 ];
 
 async function fetchRss(src: RssSource): Promise<FetchedNews[]> {
@@ -101,7 +102,7 @@ async function fetchRss(src: RssSource): Promise<FetchedNews[]> {
     );
     out.push({
       source: src.name,
-      category: src.category,
+      category: asText(item?.category) || src.category,
       title,
       url,
       summary,
