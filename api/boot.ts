@@ -13,15 +13,15 @@ ensureTables();
 ensureOwner();
 
 app.use(bodyLimit({ maxSize: 50 * 1024 * 1024 }));
-app.use("/api/trpc/*", async (c) => {
+app.use("/ai-workbench/api/trpc/*", async (c) => {
   return fetchRequestHandler({
-    endpoint: "/api/trpc",
+    endpoint: "/ai-workbench/api/trpc",
     req: c.req.raw,
     router: appRouter,
     createContext,
   });
 });
-app.all("/api/*", (c) => c.json({ error: "Not Found" }, 404));
+app.all("/ai-workbench/api/*", (c) => c.json({ error: "Not Found" }, 404));
 
 export default app;
 
