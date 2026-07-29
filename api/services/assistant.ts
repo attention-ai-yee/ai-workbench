@@ -9,6 +9,7 @@ import {
 import { listAgents } from "../queries/agents";
 import { ensureFreshNews, listNews } from "../queries/news";
 import { webSearch, webSearchAvailable } from "./web-search";
+import { aihotReply } from "./aihot";
 
 // ── 日期解析 ──────────────────────────────────────────────────
 function parseDueDate(text: string): Date | null {
@@ -86,6 +87,11 @@ export async function generateReply(
 ): Promise<string> {
   const text = message.trim();
   const persona = agent.isBuiltin ? "" : `（${agent.name}）`;
+
+  // AI HOT 资讯助手：走专用数据回复，不进入事项/通用规则
+  if (agent.name === "AI HOT") {
+    return aihotReply(text);
+  }
 
   // 1. 创建事项
   const taskTitle = extractTaskTitle(text);

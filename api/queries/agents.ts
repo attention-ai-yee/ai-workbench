@@ -54,7 +54,11 @@ export async function ensureBuiltinAgent(userId: number): Promise<Agent> {
     .select()
     .from(schema.agents)
     .where(
-      and(eq(schema.agents.userId, userId), eq(schema.agents.isBuiltin, true)),
+      and(
+        eq(schema.agents.userId, userId),
+        eq(schema.agents.isBuiltin, true),
+        eq(schema.agents.name, "工作台助手"),
+      ),
     )
     .limit(1);
   if (existing.length > 0) return existing[0];
@@ -67,6 +71,36 @@ export async function ensureBuiltinAgent(userId: number): Promise<Agent> {
     focus: "工作台效率与资讯问答",
     systemPrompt:
       "你是 AI 工作台的智能助手，擅长事项管理、资讯汇总与联网问答，回答简洁、有条理。",
+    status: "active",
+    isBuiltin: true,
+  });
+  const created = await findAgentById(userId, id);
+  return created!;
+}
+
+/** 确保用户拥有内置的「AI HOT」资讯助手（接入 aihot.virxact.com 公开 API）。 */
+export async function ensureAihotAgent(userId: number): Promise<Agent> {
+  const existing = await getDb()
+    .select()
+    .from(schema.agents)
+    .where(
+      and(
+        eq(schema.agents.userId, userId),
+        eq(schema.agents.isBuiltin, true),
+        eq(schema.agents.name, "AI HOT"),
+      ),
+    )
+    .limit(1);
+  if (existing.length > 0) return existing[0];
+  const id = await createAgent({
+    userId,
+    name: "AI HOT",
+    description:
+      "AI 资讯助手：接入 AI HOT 实时数据，提供 AI 行业热点、最新资讯与每日日报。",
+    emoji: "📡",
+    focus: "AI 资讯实时热点",
+    systemPrompt:
+      "你是基于 AI HOT (aihot.virxact.com) 公开 API 的 AI 资讯助手，能提供实时热点、最新资讯与每日日报，回答简洁、带来源链接。",
     status: "active",
     isBuiltin: true,
   });

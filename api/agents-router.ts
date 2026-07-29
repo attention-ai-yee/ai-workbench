@@ -4,6 +4,7 @@ import { authedQuery, createRouter } from "./middleware";
 import {
   createAgent,
   deleteAgent,
+  ensureAihotAgent,
   ensureBuiltinAgent,
   findAgentById,
   listAgents,
@@ -21,6 +22,7 @@ const agentInput = z.object({
 export const agentsRouter = createRouter({
   list: authedQuery.query(async ({ ctx }) => {
     await ensureBuiltinAgent(ctx.user.id);
+    await ensureAihotAgent(ctx.user.id);
     return listAgents(ctx.user.id);
   }),
 
