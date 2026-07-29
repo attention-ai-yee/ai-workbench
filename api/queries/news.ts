@@ -5,7 +5,7 @@ import { getDb } from "./connection";
 import { fetchAllNews } from "../services/news-fetcher";
 
 const REFRESH_INTERVAL_MS = 20 * 60 * 1000; // 20 分钟缓存
-const KEEP_DAYS = 3;
+const KEEP_DAYS = 30;
 
 export async function listNews(limit = 100): Promise<NewsItem[]> {
   return getDb()
@@ -24,26 +24,32 @@ export async function latestFetchedAt(): Promise<Date | null> {
   return rows.at(0)?.fetchedAt ?? null;
 }
 
-/** 从各资讯源抓取最新内容并重建缓存。返回抓取条数。 */
+/** 从各资讯源抓取最新内容并增量入库。返回抓取条数。 */
 export async function refreshNews(): Promise<number> {
   const items = await fetchAllNews();
   const db = getDb();
-  // 清理过期数据
+  // 清理过期数据（保留 30 天）
   const cutoff = new Date(Date.now() - KEEP_DAYS * 24 * 60 * 60 * 1000);
   await db.delete(schema.newsItems).where(lt(schema.newsItems.fetchedAt, cutoff));
   if (items.length > 0) {
-    // 全量重建：保证内容新鲜
-    await db.delete(schema.newsItems);
-    await db.insert(schema.newsItems).values(
-      items.map((n) => ({
-        source: n.source,
-        category: n.category,
-        title: n.title.slice(0, 900),
-        url: n.url.slice(0, 1900),
-        summary: n.summary,
-        publishedAt: n.publishedAt,
-      })),
-    );
+    // 增量插入：按 URL 去重，跳过已存在条目，历史资讯持续累积
+    const existing = await db
+      .select({ url: schema.newsItems.url })
+      .from(schema.newsItems);
+    const seen = new Set(existing.map((r) => r.url));
+    const fresh = items.filter((n) => !seen.has(n.url));
+    if (fresh.length > 0) {
+      await db.insert(schema.newsItems).values(
+        fresh.map((n) => ({
+          source: n.source,
+          category: n.category,
+          title: n.title.slice(0, 900),
+          url: n.url.slice(0, 1900),
+          summary: n.summary,
+          publishedAt: n.publishedAt,
+        })),
+      );
+    }
   }
   return items.length;
 }
