@@ -5,7 +5,7 @@ import {
   ArrowLeft,
   Bot,
   Loader2,
-  Plus,
+  MessageSquarePlus,
   Send,
   Trash2,
 } from "lucide-react";
@@ -18,17 +18,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 
-const DEFAULT_SUGGESTIONS = [
+const SUGGESTIONS = [
   "记一下 明天下午和产品组开会",
   "我今天有哪些事项？",
   "最新 AI 资讯有什么？",
-  "你能做什么？",
-];
-
-const AIHOT_SUGGESTIONS = [
-  "今天 AI 圈有什么热点？",
-  "最近有哪些大模型更新？",
-  "AI 产品动态汇总一下",
   "你能做什么？",
 ];
 
@@ -116,189 +109,184 @@ export default function AgentChat() {
   }
 
   const a = agent.data;
-  const suggestions =
-    a.name === "AI HOT" ? AIHOT_SUGGESTIONS : DEFAULT_SUGGESTIONS;
 
   return (
-    <div className="flex h-[calc(100vh-6rem)] flex-col rounded-xl border bg-card">
-      {/* 头部 */}
-      <div className="flex items-center gap-3 border-b px-4 py-3">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate("/agents")}
-          aria-label="返回"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <span className="text-2xl">{a.emoji}</span>
-        <div className="min-w-0">
-          <p className="truncate font-semibold">{a.name}</p>
-          <p className="truncate text-xs text-muted-foreground">
-            {a.focus || a.description || "AI 助手"}
-          </p>
-        </div>
-        <span
-          className={`ml-auto inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs ${
-            a.status === "active"
-              ? "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300"
-              : "bg-gray-100 text-gray-500"
-          }`}
-        >
-          <span
-            className={`h-1.5 w-1.5 rounded-full ${
-              a.status === "active" ? "bg-green-500" : "bg-gray-400"
-            }`}
-          />
-          {a.status === "active" ? "在线" : "已暂停"}
-        </span>
-      </div>
-
-      {/* 会话条 */}
-      <div className="flex items-center gap-2 border-b bg-muted/30 px-3 py-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8 shrink-0 gap-1 px-2 text-xs"
-          onClick={() => setSessionId(null)}
-        >
-          <Plus className="h-3.5 w-3.5" /> 新对话
-        </Button>
-        <div className="h-5 w-px bg-border" />
-        <ScrollArea className="flex-1">
-          <div className="flex items-center gap-2 px-1">
-            {agentSessions.length === 0 && (
-              <span className="text-xs text-muted-foreground">
-                暂无历史会话
-              </span>
-            )}
-            {agentSessions.map((s) => (
-              <button
-                key={s.id}
-                onClick={() => setSessionId(s.id)}
-                className={`group flex min-w-0 max-w-[200px] items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-left text-xs transition-all ${
-                  sessionId === s.id
-                    ? "border-primary/50 bg-primary/10 text-primary"
-                    : "border-transparent bg-background hover:bg-accent"
-                }`}
-              >
-                <span className="min-w-0 flex-1 truncate">{s.title}</span>
-                <span className="shrink-0 text-[10px] text-muted-foreground">
-                  {relativeTime(s.updatedAt)}
-                </span>
-                <span
-                  role="button"
-                  tabIndex={0}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeSession.mutate({ id: s.id });
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.stopPropagation();
-                      removeSession.mutate({ id: s.id });
-                    }
-                  }}
-                  className="hidden shrink-0 text-muted-foreground hover:text-destructive group-hover:block"
-                  aria-label="删除会话"
-                >
-                  <Trash2 className="h-3 w-3" />
-                </span>
-              </button>
-            ))}
-          </div>
-        </ScrollArea>
-      </div>
-
-      {/* 消息区 */}
-      <ScrollArea className="flex-1 px-4">
-        <div className="space-y-5 py-5">
-          {sessionId === null && (
-            <div className="mx-auto max-w-lg py-10 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-3xl">
-                {a.emoji}
-              </div>
-              <h2 className="mt-4 text-lg font-semibold">
-                你好，我是{a.name}
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {a.description ?? "有什么可以帮你的？"}
-              </p>
-              <div className="mt-6 grid gap-2 sm:grid-cols-2">
-                {suggestions.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => void send(s)}
-                    className="rounded-xl border px-3 py-2.5 text-left text-sm transition-all hover:border-primary/50 hover:bg-accent"
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {messages.isLoading && sessionId !== null && (
-            <div className="space-y-3">
-              <Skeleton className="h-12 w-2/3" />
-              <Skeleton className="ml-auto h-12 w-1/2" />
-            </div>
-          )}
-
-          {(messages.data ?? []).map((m) => (
-            <MessageBubble
-              key={m.id}
-              role={m.role}
-              content={m.content}
-              emoji={a.emoji}
-            />
-          ))}
-
-          {sending && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-primary/10 text-base">
-                  {a.emoji}
-                </AvatarFallback>
-              </Avatar>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              正在思考…
-            </div>
-          )}
-          <div ref={bottomRef} />
-        </div>
-      </ScrollArea>
-
-      {/* 输入区 */}
-      <div className="border-t p-3">
-        <div className="flex items-end gap-2">
-          <Textarea
-            placeholder={`发消息给${a.name}…（Enter 发送，Shift+Enter 换行）`}
-            className="min-h-[44px] max-h-40 resize-none"
-            rows={1}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                void send(input);
-              }
-            }}
-          />
+    <div className="flex h-[calc(100vh-6rem)] gap-4">
+      {/* 会话列表 */}
+      <aside className="hidden w-56 shrink-0 flex-col rounded-xl border bg-card shadow-sm lg:flex">
+        <div className="border-b p-3">
           <Button
-            size="icon"
-            className="h-11 w-11 shrink-0"
-            disabled={!input.trim() || sending || a.status !== "active"}
-            onClick={() => void send(input)}
-            aria-label="发送"
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={() => setSessionId(null)}
           >
-            <Send className="h-4 w-4" />
+            <MessageSquarePlus className="mr-1.5 h-4 w-4" /> 新对话
           </Button>
         </div>
-        <p className="mt-1.5 flex items-center gap-1 px-1 text-xs text-muted-foreground">
-          <Bot className="h-3 w-3" />
-          助手可帮你记录事项、查询待办、汇总资讯并联网检索回答
-        </p>
+        <ScrollArea className="flex-1">
+          <div className="space-y-1 p-2">
+            {agentSessions.map((s) => (
+              <div
+                key={s.id}
+                className={`group flex items-center gap-1 rounded-lg px-2 py-2 text-sm transition-colors ${
+                  sessionId === s.id
+                    ? "bg-primary/10 text-primary"
+                    : "hover:bg-accent"
+                }`}
+              >
+                <button
+                  className="min-w-0 flex-1 text-left"
+                  onClick={() => setSessionId(s.id)}
+                >
+                  <p className="truncate">{s.title}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {relativeTime(s.updatedAt)}
+                  </p>
+                </button>
+                <button
+                  className="hidden shrink-0 text-muted-foreground hover:text-destructive group-hover:block"
+                  onClick={() => removeSession.mutate({ id: s.id })}
+                  aria-label="删除会话"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))}
+            {agentSessions.length === 0 && (
+              <p className="px-2 py-6 text-center text-xs text-muted-foreground">
+                暂无历史会话
+              </p>
+            )}
+          </div>
+        </ScrollArea>
+      </aside>
+
+      {/* 聊天主区 */}
+      <div className="flex min-w-0 flex-1 flex-col rounded-xl border bg-card">
+        {/* 头部 */}
+        <div className="flex items-center gap-3 border-b px-4 py-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/agents")}
+            aria-label="返回"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-2xl">{a.emoji}</span>
+          <div className="min-w-0">
+            <p className="truncate font-semibold">{a.name}</p>
+            <p className="truncate text-xs text-muted-foreground">
+              {a.focus || a.description || "AI 助手"}
+            </p>
+          </div>
+          <span
+            className={`ml-auto inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs ${
+              a.status === "active"
+                ? "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300"
+                : "bg-gray-100 text-gray-500"
+            }`}
+          >
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                a.status === "active" ? "bg-green-500" : "bg-gray-400"
+              }`}
+            />
+            {a.status === "active" ? "在线" : "已暂停"}
+          </span>
+        </div>
+
+        {/* 消息区 */}
+        <ScrollArea className="flex-1 px-4">
+          <div className="space-y-5 py-5">
+            {sessionId === null && (
+              <div className="mx-auto max-w-lg py-10 text-center">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-3xl">
+                  {a.emoji}
+                </div>
+                <h2 className="mt-4 text-lg font-semibold">
+                  你好，我是{a.name}
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {a.description ?? "有什么可以帮你的？"}
+                </p>
+                <div className="mt-6 grid gap-2 sm:grid-cols-2">
+                  {SUGGESTIONS.map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => void send(s)}
+                      className="rounded-xl border px-3 py-2.5 text-left text-sm transition-all hover:border-primary/50 hover:bg-accent"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {messages.isLoading && sessionId !== null && (
+              <div className="space-y-3">
+                <Skeleton className="h-12 w-2/3" />
+                <Skeleton className="ml-auto h-12 w-1/2" />
+              </div>
+            )}
+
+            {(messages.data ?? []).map((m) => (
+              <MessageBubble
+                key={m.id}
+                role={m.role}
+                content={m.content}
+                emoji={a.emoji}
+              />
+            ))}
+
+            {sending && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="bg-primary/10 text-base">
+                    {a.emoji}
+                  </AvatarFallback>
+                </Avatar>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                正在思考…
+              </div>
+            )}
+            <div ref={bottomRef} />
+          </div>
+        </ScrollArea>
+
+        {/* 输入区 */}
+        <div className="border-t p-3">
+          <div className="flex items-end gap-2">
+            <Textarea
+              placeholder={`发消息给${a.name}…（Enter 发送，Shift+Enter 换行）`}
+              className="min-h-[44px] max-h-40 resize-none"
+              rows={1}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  void send(input);
+                }
+              }}
+            />
+            <Button
+              size="icon"
+              className="h-11 w-11 shrink-0"
+              disabled={!input.trim() || sending || a.status !== "active"}
+              onClick={() => void send(input)}
+              aria-label="发送"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+          <p className="mt-1.5 flex items-center gap-1 px-1 text-xs text-muted-foreground">
+            <Bot className="h-3 w-3" />
+            助手可帮你记录事项、查询待办、汇总资讯并联网检索回答
+          </p>
+        </div>
       </div>
     </div>
   );
