@@ -6,6 +6,8 @@ import {
   Bot,
   Loader2,
   MessageSquarePlus,
+  PanelLeft,
+  PanelLeftClose,
   Send,
   Trash2,
 } from "lucide-react";
@@ -40,6 +42,7 @@ export default function AgentChat() {
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [sessionsOpen, setSessionsOpen] = useState(true);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const agentSessions = useMemo(
@@ -113,7 +116,13 @@ export default function AgentChat() {
   return (
     <div className="flex h-[calc(100vh-6rem)] gap-4">
       {/* 会话列表 */}
-      <aside className="hidden w-56 shrink-0 flex-col rounded-xl border bg-card shadow-sm lg:flex">
+      <aside
+        className={`shrink-0 flex-col rounded-xl border bg-card shadow-sm transition-all duration-200 md:flex ${
+          sessionsOpen
+            ? "w-56 opacity-100"
+            : "w-0 opacity-0 border-0"
+        }`}
+      >
         <div className="border-b p-3">
           <Button
             variant="outline"
@@ -124,7 +133,7 @@ export default function AgentChat() {
             <MessageSquarePlus className="mr-1.5 h-4 w-4" /> 新对话
           </Button>
         </div>
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 overflow-hidden">
           <div className="space-y-1 p-2">
             {agentSessions.map((s) => (
               <div
@@ -173,6 +182,19 @@ export default function AgentChat() {
             aria-label="返回"
           >
             <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hidden md:flex"
+            onClick={() => setSessionsOpen((v) => !v)}
+            aria-label={sessionsOpen ? "收起会话列表" : "展开会话列表"}
+          >
+            {sessionsOpen ? (
+              <PanelLeftClose className="h-4 w-4" />
+            ) : (
+              <PanelLeft className="h-4 w-4" />
+            )}
           </Button>
           <span className="text-2xl">{a.emoji}</span>
           <div className="min-w-0">
