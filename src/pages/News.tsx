@@ -116,14 +116,14 @@ export default function News() {
         </Card>
       )}
 
-      <div className="grid gap-3 md:grid-cols-2 md:gap-4">
+      <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
         {filtered.map((n) => (
           <a
             key={n.id}
             href={n.url}
             target="_blank"
             rel="noreferrer"
-            className="group -mx-1 sm:mx-0"
+            className="group min-w-0"
           >
             <Card className="h-full border-transparent transition-all group-hover:border-primary/40 group-hover:shadow-md sm:border-border">
               <CardContent className="flex h-full flex-col p-4">
@@ -136,8 +136,8 @@ export default function News() {
                   >
                     {n.source}
                   </span>
-                  <Badge variant="outline" className="text-xs">{n.category}</Badge>
-                  <span className="ml-auto text-xs text-muted-foreground">
+                  <Badge variant="outline" className="max-w-full truncate text-xs">{n.category}</Badge>
+                  <span className="ml-auto shrink-0 text-xs text-muted-foreground">
                     {relativeTime(n.publishedAt)}
                   </span>
                 </div>
