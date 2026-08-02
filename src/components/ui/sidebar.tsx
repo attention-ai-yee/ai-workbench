@@ -28,9 +28,9 @@ import {
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
 const SIDEBAR_WIDTH = "16rem"
-// Mobile drawer ~1/3 of a phone screen: 8rem ≈ 128px (was 14rem/224px
-// which exceeded half the screen on 375px devices).
-const SIDEBAR_WIDTH_MOBILE = "8rem"
+// Mobile drawer ~1/2 of a phone screen: 12rem ≈ 192px (~51% on 375px).
+// 8rem was too narrow and truncated menu labels; 14rem too wide.
+const SIDEBAR_WIDTH_MOBILE = "12rem"
 const SIDEBAR_WIDTH_ICON = "3rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 
