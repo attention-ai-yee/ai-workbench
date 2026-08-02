@@ -52,17 +52,19 @@ export default function News() {
   );
 
   return (
-    <div className="mx-auto max-w-5xl space-y-5">
+    <div className="mx-auto max-w-5xl space-y-5 px-1 sm:px-0">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">资讯</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold tracking-tight sm:text-2xl">资讯</h1>
+          <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
             聚合 36氪、机器之心、少数派、爱范儿、Hacker News 等来源，每 20
             分钟自动更新。
           </p>
         </div>
         <Button
           variant="outline"
+          size="sm"
+          className="sm:size-default"
           onClick={() => refresh.mutate()}
           disabled={refresh.isPending}
         >
@@ -78,13 +80,13 @@ export default function News() {
           value={category}
           onValueChange={(v) => setCategory(v as typeof category)}
         >
-          <TabsList>
-            <TabsTrigger value="all">全部</TabsTrigger>
-            <TabsTrigger value="AI">AI</TabsTrigger>
-            <TabsTrigger value="科技">科技</TabsTrigger>
+          <TabsList className="w-full sm:w-auto">
+            <TabsTrigger value="all" className="flex-1 sm:flex-none">全部</TabsTrigger>
+            <TabsTrigger value="AI" className="flex-1 sm:flex-none">AI</TabsTrigger>
+            <TabsTrigger value="科技" className="flex-1 sm:flex-none">科技</TabsTrigger>
           </TabsList>
         </Tabs>
-        <div className="relative ml-auto w-full sm:w-64">
+        <div className="relative w-full sm:ml-auto sm:w-64">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-9"
@@ -114,18 +116,18 @@ export default function News() {
         </Card>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-2 md:gap-4">
         {filtered.map((n) => (
           <a
             key={n.id}
             href={n.url}
             target="_blank"
             rel="noreferrer"
-            className="group"
+            className="group -mx-1 sm:mx-0"
           >
-            <Card className="h-full transition-all group-hover:border-primary/40 group-hover:shadow-md">
-              <CardContent className="flex h-full flex-col py-4">
-                <div className="flex items-center gap-2">
+            <Card className="h-full border-transparent transition-all group-hover:border-primary/40 group-hover:shadow-md sm:border-border">
+              <CardContent className="flex h-full flex-col p-4">
+                <div className="flex flex-wrap items-center gap-1.5">
                   <span
                     className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${
                       SOURCE_COLORS[n.source] ??
@@ -134,7 +136,7 @@ export default function News() {
                   >
                     {n.source}
                   </span>
-                  <Badge variant="outline">{n.category}</Badge>
+                  <Badge variant="outline" className="text-xs">{n.category}</Badge>
                   <span className="ml-auto text-xs text-muted-foreground">
                     {relativeTime(n.publishedAt)}
                   </span>
@@ -147,8 +149,9 @@ export default function News() {
                     {n.summary}
                   </p>
                 )}
-                <div className="mt-auto pt-3 text-xs text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
-                  <span className="flex items-center gap-1">
+                {/* 移动端常显「阅读原文」，桌面端 hover 显示 */}
+                <div className="mt-auto pt-3 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1 md:opacity-0 md:transition-opacity md:group-hover:opacity-100">
                     阅读原文 <ExternalLink className="h-3 w-3" />
                   </span>
                 </div>
