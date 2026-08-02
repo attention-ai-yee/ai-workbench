@@ -116,6 +116,9 @@ async function fetchHackerNews(): Promise<FetchedNews[]> {
   const queries: Array<{ q: string; category: string }> = [
     { q: "AI", category: "AI" },
     { q: "LLM", category: "AI" },
+    // Show HN: indie devs presenting what they built — great for spotting
+    // "what are people building to make money with AI" opportunities.
+    { q: "Show HN", category: "AI" },
   ];
   const out: FetchedNews[] = [];
   for (const { q, category } of queries) {
@@ -146,10 +149,45 @@ async function fetchHackerNews(): Promise<FetchedNews[]> {
   return out;
 }
 
+/**
+ * Product Hunt — daily new products. Direct window into "what are people
+ * building" (many are AI tools), i.e. monetizable project ideas.
+ * Atom feed: <feed><entry><title><content><link href><published>
+ */
+async function fetchProductHunt(): Promise<FetchedNews[]> {
+  const xml = await fetchText("https://www.producthunt.com/feed");
+  const doc = parser.parse(xml);
+  let entries = doc?.feed?.entry ?? [];
+  if (!Array.isArray(entries)) entries = [entries];
+  const out: FetchedNews[] = [];
+  for (const entry of entries.slice(0, 20)) {
+    const title = stripHtml(asText(entry?.title));
+    let url = asText(entry?.link);
+    // Atom link can be a string or { '@_href': ... }
+    if (entry?.link && typeof entry.link === "object" && !url) {
+      const l = entry.link as Record<string, unknown>;
+      url = asText(l["@_href"]);
+    }
+    if (!title || !url) continue;
+    const content =
+      stripHtml(asText(entry?.content)) || stripHtml(asText(entry?.summary));
+    out.push({
+      source: "Product Hunt",
+      category: "AI",
+      title,
+      url: url.trim(),
+      summary: truncate(content, 160),
+      publishedAt: parseDate(entry?.published) ?? parseDate(entry?.updated),
+    });
+  }
+  return out;
+}
+
 /** 聚合所有资讯源；单个源失败不影响整体。 */
 export async function fetchAllNews(): Promise<FetchedNews[]> {
   const tasks: Array<Promise<FetchedNews[]>> = [
     fetchHackerNews(),
+    fetchProductHunt(),
     ...RSS_SOURCES.map((s) => fetchRss(s)),
   ];
   const settled = await Promise.allSettled(tasks);
